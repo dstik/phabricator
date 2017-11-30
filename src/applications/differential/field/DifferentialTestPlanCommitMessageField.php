@@ -21,6 +21,10 @@ final class DifferentialTestPlanCommitMessageField
     );
   }
 
+  public static function getDefaultTitle() {
+    return pht('<<Please provide a detailed test plan. Add explicit steps when possible>>');
+  }
+
   public function isFieldEnabled() {
     return $this->isCustomFieldEnabled('differential:test-plan');
   }
@@ -35,10 +39,23 @@ final class DifferentialTestPlanCommitMessageField
           'You must provide a test plan. Describe the actions you performed '.
           'to verify the behavior of this change.'));
     }
+
+    if($is_required && stripos($value, self::getDefaultTitle()) !== false) {
+      $this->raiseParseException(
+        pht(
+          'You must replace the default test plan line with a legitimate '.
+          'test plan which describes how to test the changes you are making.'));
+    }
   }
 
   public function readFieldValueFromObject(DifferentialRevision $revision) {
-    return $revision->getTestPlan();
+    $value = $revision->getTestPlan();
+    
+    if (!strlen($value)) {
+      return "\n".self::getDefaultTitle();
+    }
+
+    return $value;
   }
 
   public function getFieldTransactions($value) {
